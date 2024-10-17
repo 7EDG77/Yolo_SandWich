@@ -1,0 +1,27 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+
+train: D:\PyCharm Community Edition 2024.1.4\PythonPreject\Awesome-Backbones-main\Yolov8\img9k_all\YOLO_format\images\train
+val: D:\PyCharm Community Edition 2024.1.4\PythonPreject\Awesome-Backbones-main\Yolov8\img9k_all\YOLO_format\images\val
+test: D:\PyCharm Community Edition 2024.1.4\PythonPreject\Awesome-Backbones-main\Yolov8\img9k_all\YOLO_format\images\test
+# Parameters
+nc: 1  # number of classes
+
+## 指定使用二元交叉熵损失
+#model:
+#  loss:
+#    type: BCELoss
+#
+## Data augmentation
+#transforms:
+#  - type: ColorJitter
+#    brightness: 0.5
+#    contrast: 0.5
+#    saturation: 0.5
+#    hue: 0.25
+##  - type: RandomHorizontalFlip
+#  - type: RandomAffine
+#    degrees: 10
+#    scale: [0.9, 1.1]
+#    translate: [0.1, 0.1]
+
+# Model configuration (rest of your v1.yaml content)

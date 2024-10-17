@@ -1,0 +1,59 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv8 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+
+# 参数调节可在ultralytics/defult.yaml文件下设置，详情请参见 https://docs.ultralytics.com/zh/modes/train/augmentation-settings-and-hyperparameters 
+
+
+train: D:\PyCharm Community Edition 2024.1.4\PythonPreject\Awesome-Backbones-main\Yolov8\img9k_all\YOLO_format\images\train
+val: D:\PyCharm Community Edition 2024.1.4\PythonPreject\Awesome-Backbones-main\Yolov8\img9k_all\YOLO_format\images\val
+test: D:\PyCharm Community Edition 2024.1.4\PythonPreject\Awesome-Backbones-main\Yolov8\img9k_all\YOLO_format\images\test
+
+
+# Parameters
+nc: 1 # number of classes
+scales: # model compound scaling constants, i.e. 'model=yolov8n.yaml' will call yolov8.yaml with scale 'n'
+  # [depth, width, max_channels]
+  n: [0.33, 0.25, 1024] # YOLOv8n summary: 225 layers,  3157200 parameters,  3157184 gradients,   8.9 GFLOPs
+  s: [0.33, 0.50, 1024] # YOLOv8s summary: 225 layers, 11166560 parameters, 11166544 gradients,  28.8 GFLOPs
+  m: [0.67, 0.75, 768] # YOLOv8m summary: 295 layers, 25902640 parameters, 25902624 gradients,  79.3 GFLOPs
+  l: [1.00, 1.00, 512] # YOLOv8l summary: 365 layers, 43691520 parameters, 43691504 gradients, 165.7 GFLOPs
+  x: [1.00, 1.25, 512] # YOLOv8x summary: 365 layers, 68229648 parameters, 68229632 gradients, 258.5 GFLOPs
+
+# YOLOv8.0n backbone
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, Conv, [64, 3, 2]]  # 0-P1/2 第0层，-1代表将上层的输出作为本层的输入。第0层的输入是640*640*3的图像。Conv代表卷积层，相应的参数：64代表输出通道数，3代表卷积核大小k，2代表stride步长。卷积后输出的特征图尺寸为320*320*64，长宽为初始图片的1/2
+  - [-1, 1, Conv, [128, 3, 2]]  # 1-P2/4 第1层，本层和上一层是一样的操作（128代表输出通道数，3代表卷积核大小k，2代表stride步长）。卷积后输出的特征图尺寸为160*160*128，长宽为初始图片的1/4
+  - [-1, 3, C2f, [128, True]] # 第2层，本层是C2f模块，3代表本层重复3次。128代表输出通道数，True表示Bottleneck有shortcut。输出的特征图尺寸为160*160*128。
+  - [-1, 1, Conv, [256, 3, 2]]  # 3-P3/8 第3层，进行卷积操作（256代表输出通道数，3代表卷积核大小k，2代表stride步长），输出特征图尺寸为80*80*256（卷积的参数都没变，所以都是长宽变成原来的1/2，和之前一样），特征图的长宽已经变成输入图像的1/8。
+  - [-1, 6, C2f, [256, True]] # 第4层，本层是C2f模块，可以参考第2层的讲解。6代表本层重复6次。256代表输出通道数，True表示Bottleneck有shortcut。经过这层之后，特征图尺寸依旧是80*80*256。
+  - [-1, 1, Conv, [512, 3, 2]]  # 5-P4/16 第5层，进行卷积操作（512代表输出通道数，3代表卷积核大小k，2代表stride步长），输出特征图尺寸为40*40*512（卷积的参数都没变，所以都是长宽变成原来的1/2，和之前一样），特征图的长宽已经变成输入图像的1/16。
+  - [-1, 6, C2f, [512, True]] # 第6层，本层是C2f模块，可以参考第2层的讲解。6代表本层重复6次。512代表输出通道数，True表示Bottleneck有shortcut。经过这层之后，特征图尺寸依旧是40*40*512。
+  - [-1, 1, Conv, [1024, 3, 2]]  # 7-P5/32 第7层，进行卷积操作（1024代表输出通道数，3代表卷积核大小k，2代表stride步长），输出特征图尺寸为20*20*1024（卷积的参数都没变，所以都是长宽变成原来的1/2，和之前一样），特征图的长宽已经变成输入图像的1/32。
+  - [-1, 3, C2f, [1024, True]] #第8层，本层是C2f模块，可以参考第2层的讲解。3代表本层重复3次。1024代表输出通道数，True表示Bottleneck有shortcut。经过这层之后，特征图尺寸依旧是20*20*1024。
+
+  ################## CA ################
+  - [ -1, 1, CA, [ 1024, 32 ] ] # 9 CA block
+  - [-1, 1, SPPF, [1024, 5]]  # 10
+
+
+# YOLOv8.0n head
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 6], 1, Concat, [1]] # cat backbone P4
+  - [-1, 3, C2f, [512]] # 12
+
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 4], 1, Concat, [1]] # cat backbone P3
+  - [-1, 3, C2f, [256]] # 15 (P3/8-small)
+
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 12], 1, Concat, [1]] # cat head P4
+  - [-1, 3, C2f, [512]] # 18 (P4/16-medium)
+
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 9], 1, Concat, [1]] # cat head P5
+  - [-1, 3, C2f, [1024]] # 21 (P5/32-large)
+
+  - [[16, 19, 22], 1, Detect, [nc]] # Detect(P3, P4, P5)
